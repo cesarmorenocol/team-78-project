@@ -11,8 +11,6 @@ import plotly.graph_objects as go
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
-
 variable = 'Leq'
 medida = 'Valor_mean'
 cai = "CAI 20 de Julio"
@@ -22,11 +20,103 @@ cai = "CAI 20 de Julio"
 df_hora = pd.read_csv(r'data/df_group_hora.csv', encoding='utf_8',delimiter=';')
 df_dia = pd.read_csv(r'data/df_group_dia.csv', encoding='utf_8',delimiter=';')
 df_fecha = pd.read_csv(r'data/df_group_fecha.csv', encoding='utf_8',delimiter=';')
+DFP = pd.read_csv('data/df_lineasFecha.csv', dtype='unicode', encoding='utf_8',decimal='.')
+
+##################################################
+# Graphs:
+##################################################
+
+# Last 15 Days of Data
+
+DFP['Fecha']=DFP['Fecha'].apply(lambda x: pd.to_datetime(x,format='%Y-%m-%d  %H:%M:%S'))
+DFP['Valor_max']=pd.to_numeric(DFP['Valor_max'])
+DFP['Valor_mean']=pd.to_numeric(DFP['Valor_mean'])
+DFP['Valor_min']=pd.to_numeric(DFP['Valor_min'])
+
+#Estacion="any"
+if cai == "any":
+    DFP2=DFP.groupby(['Fecha','Variable']).mean().reset_index()
+    fig_15_days = px.line(DFP2, x="Fecha", y=["Valor_mean"],color ="Variable")
+
+else:
+    DFP2=DFP[DFP["Estación"]==cai]
+    fig_15_days = px.line(DFP2, x="Fecha", y=["Valor_mean"],color ="Variable")
+
+
+# Barras por Hora
+df_h = df_hora.copy()
+df = df_h.loc[df_h['Variable']=='Leq']
+dfa = df.groupby(['Hora','Variable']).mean().reset_index()
+dfa['Estación'] = 'Todas las estaciones'
+df = pd.concat([dfa[dfa.columns.to_list()],df])
+
+# # plotly
+fig_bars_day = go.Figure()
+
+# set up ONE trace
+fig_bars_day.add_trace(go.Bar(x=df['Hora'],
+                     y=df['Valor_mean'].loc[df['Estación'] == 'Todas las estaciones'],
+                     # title = 'dfa',
+                     visible=True)
+              )
+
+updatemenu = []
+# b0 = dict(method='restyle',label='Todas las estaciones',visible=True)
+buttons = []
+diy = {"title": "Noise Level Leq [db]", 'range': [0, 65]}
+fig_bars_day.layout.yaxis = diy
+dix = {"title": "Hour"}
+fig_bars_day.layout.xaxis = dix
+dia = {'text': 'test'}
+
+# Step 1 - adjust margins to make room for the text
+fig_bars_day.update_layout(margin=dict(t=150))
+
+# Step 3 - add text with xref set to x
+# and yref set to 'paper' which will let you set
+# text outside the plot itself by specifying y > 1
+fig_bars_day.add_annotation(dict(font=dict(color="black", size=13),
+                        # x=x_loc,
+                        x='a',
+                        y=1.08,
+                        showarrow=False,
+                        text='Select station of interest',
+                        textangle=0,
+                        xref="paper",
+                        yref="paper"
+                        ))
+
+# button with one option for each dataframe
+for estacion in df['Estación'].unique():
+    buttons.append(dict(method='update',
+                        label=estacion,
+                        visible=True,
+                        args=[{'y': [df['Valor_mean'].loc[df['Estación'] == estacion]],
+                               'x': [df['Hora']],
+                               'type': 'bar'},
+                              {"xaxis": dix,
+                               "yaxis": diy}, [0]],
+
+                        )
+                   )
+
+# some adjustments to the updatemenus
+updatemenu = []
+your_menu = dict()
+updatemenu.append(your_menu)
+
+updatemenu[0]['buttons'] = buttons
+updatemenu[0]['direction'] = 'down'
+updatemenu[0]['showactive'] = True
+
+# add dropdown menus to the figure
+fig_bars_day.update_layout(showlegend=False, updatemenus=updatemenu,
+                           #title_text='Noise level for stations throughout the day'
+                           )
 
 # Serie de tiempo
 
 df_cai = df_fecha[(df_fecha.Estación == cai)]
-
 
 fig_day_series = go.Figure()
 fig_day_series.add_trace(go.Scatter(x=df_cai["Fecha_Dia"],
@@ -53,9 +143,6 @@ fig_day_series.update_xaxes(
 
 
 # Mapa por hora
-
-
-
 fig_map_hour = px.density_mapbox(df_hora[df_hora['Variable'] == variable], lat='latitude', lon='longitude', z= medida,
                                  radius=50,
                                  animation_group = 'Estación',
@@ -74,7 +161,6 @@ fig_map_hour.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
 
 # Mapa por día
-
 fig_map_day = px.density_mapbox(df_dia[df_dia['Variable']== variable], lat='latitude', lon='longitude', z=medida, radius=50
                         ,animation_group = 'Estación'
                         ,animation_frame  = 'Dia'
@@ -83,9 +169,9 @@ fig_map_day = px.density_mapbox(df_dia[df_dia['Variable']== variable], lat='lati
                         ,color_continuous_midpoint =50
                        )
 fig_map_day.update_layout(mapbox_style="stamen-toner"
-                  ,mapbox_zoom=10
-                  , mapbox_center = {"lat": 4.60971, "lon": -74.08175}
-                 )
+                          ,mapbox_zoom=10
+                          , mapbox_center = {"lat": 4.60971, "lon": -74.08175}
+                          )
 fig_map_day.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
 # Styles to be applied to the page
@@ -100,7 +186,9 @@ k2_gen_info = {
 k2_title = {
     'font-size': '1.5rem',
     'padding-top': '1rem',
+    'color':"#4b73d4ff"
 }
+
 k2_profile = {
     'font-size': '0.8rem'
 }
@@ -323,10 +411,7 @@ tab_maps = dbc.Card(
                 "Use the sliders to explore how the average noise changes during the day in Bogotá. You can Zoom-In and Zoom-out ",
                 className="card-text"),
             html.Hr(className="my-2"),
-            html.Div([dcc.Graph(figure=fig_day_series)]),
-
-            #html.P("This is a tab!", className="card-text"),
-            #dbc.Button("Click here", color="secondary"),
+            html.Div([dcc.Graph(figure=fig_map_day)]),
         ]
     ),
     className="mt-3",
@@ -335,25 +420,42 @@ tab_maps = dbc.Card(
 tab_time_series = dbc.Card(
     dbc.CardBody(
         [
-            html.P("Evolution of noise over time:", style=k2_tabs_info),
+            html.P("Noise for the last 15 Days", style=k2_tabs_info),
             html.Hr(className="my-2"),
-            html.P("There are different sensors located in the City. Used the dropdown to select a sensor of interest.", className="card-text"),
+            html.P("Below you can see the different measurements of Noise for the last 15 days of data. Each line represents one of the different measures of noise",
+                   className="card-text"),
             html.Div(
                 [
-                    dcc.Dropdown(
-                        id='cai-dropdown',
-                        options=[
-                            {'label': 'New York City', 'value': 'NYC'},
-                            {'label': 'Montreal', 'value': 'MTL'},
-                            {'label': 'San Francisco', 'value': 'SF'}
-                        ],
-                        value='NYC'
-                    ),
+                    html.Div([dcc.Graph(figure=fig_15_days)]),
+                ], className='container'
+            ),
+            html.P("Evolution of Leq over time. Leq is the most common way to emasure noise:", style=k2_tabs_info),
+            html.Hr(className="my-2"),
+            html.P("Use the slider below the graph to select a time range. You can also use the buttons above the graph.",
+                   className="card-text"),
+            html.Div(
+                [
+                    # dcc.Dropdown(
+                    #     id='cai-dropdown',
+                    #     options=[
+                    #         {'label': 'New York City', 'value': 'NYC'},
+                    #         {'label': 'Montreal', 'value': 'MTL'},
+                    #         {'label': 'San Francisco', 'value': 'SF'}
+                    #     ],
+                    #     value='NYC'
+                    # ),
                     html.Div([dcc.Graph(figure=fig_day_series)]),
                 ], className='container'
             ),
-            #html.P("This is a tab!", className="card-text"),
-            #dbc.Button("Click here", color="secondary"),
+            html.P("Distribution of noise during the day for each station:", style=k2_tabs_info),
+            html.Hr(className="my-2"),
+            html.P("There are different sensors located in the City. Use the dropdown to select a sensor of interest.",
+                   className="card-text"),
+            html.Div(
+                [
+                    html.Div([dcc.Graph(figure=fig_bars_day)]),
+                ], className='container'
+            ),
         ]
     ),
     className="mt-3",
@@ -374,7 +476,7 @@ tab_predictions = dbc.Card(
 tabs = dbc.Tabs(
     [
         dbc.Tab(tab_maps, label="Maps"),
-        dbc.Tab(tab_time_series, label="Time series"),
+        dbc.Tab(tab_time_series, label="Time series analysis"),
         dbc.Tab(tab_predictions, label="Predictions"),
     ]
 )
@@ -410,9 +512,6 @@ app.layout = html.Div(
 # Filtering using dropdowns:
 ##################################################
 
-
-
-
 ##################################################
 # Handling the render of the pages:
 ##################################################
@@ -443,7 +542,10 @@ def render_page_content(pathname):
         ]
     )
 
-# add callback for toggling the collapse on small screens
+##################################################
+# Add callback for toggling the collapse on small 
+# screens
+##################################################
 @app.callback(
     Output("navbar-collapse", "is_open"),
     [Input("navbar-toggler", "n_clicks")],
