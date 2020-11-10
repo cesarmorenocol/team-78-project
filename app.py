@@ -114,4 +114,4 @@ def plot_time_series_figure(station):
     return project.time_series.get_time_series_figure(station, project.variable, project.medida)
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0',debug=True, port=8050)
+    app.run_server()
