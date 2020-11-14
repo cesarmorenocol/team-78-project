@@ -15,7 +15,6 @@ class ProjectPage():
     maps = MapAnalysis()
     # time series analysis
     time_series = TimeSeriesAnalysis()
-    data = DataAccess()
     
     # Some variables for handling graphs:
     variable = 'Leq'
@@ -132,7 +131,7 @@ class ProjectPage():
                         "Here you can find information about different sensors located in the City. \
                         Use the dropdown to select a sensor of interest.",
                         className='gen-info'),
-                    html.Div(html.Div([dcc.Graph(figure = time_series.get_bar_figure())]), className='container'),
+                    html.Div(html.Div([dcc.Graph(id='time-series-bar')]), className='container'),
                     
                 ], className="card-body"
             ),

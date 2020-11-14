@@ -98,7 +98,9 @@ def toggle_navbar_collapse(n, is_open):
         return not is_open
     return is_open
 
-
+##################################################
+# Callbacks for ploting time seriesfgures:
+##################################################
 @app.callback(
     Output('time-series-15days', 'figure'),
     [Input('stations-selector', 'value')]
@@ -113,5 +115,12 @@ def get_selected_station(station):
 def plot_time_series_figure(station):
     return project.time_series.get_time_series_figure(station, project.variable, project.medida)
 
+@app.callback(
+    Output('time-series-bar', 'figure'),
+    [Input('stations-selector', 'value')]
+)
+def plot_bar_figure(station):
+    return project.time_series.get_bar_figure(station)
+
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(host='0.0.0.0',debug=True, port=8050)
