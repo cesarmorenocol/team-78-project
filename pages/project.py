@@ -8,6 +8,7 @@ from dash.dependencies import Input, Output, State
 from model.maps import MapAnalysis
 from model.time_series import TimeSeriesAnalysis
 from model.data_access import DataAccess
+from model.predictions import Predictions
 
 class ProjectPage():
     
@@ -15,6 +16,7 @@ class ProjectPage():
     maps = MapAnalysis()
     # time series analysis
     time_series = TimeSeriesAnalysis()
+    predictions = Predictions()
     
     # Some variables for handling graphs:
     variable = 'Leq'
@@ -143,12 +145,12 @@ class ProjectPage():
         [
             html.Div(
                 [
-                    "Other graph",
+                    "Noise perception over the week (Prediction for 6 months)",
                     html.Div(
                         [
                             html.Span("Select your station", className='pane-right-text'),
                             dcc.Dropdown(id="stations-predictions", options=[{"label":x,"value":x} 
-                                                               for x in time_series.stations], value='CAI 20 de Julio')
+                                                               for x in predictions.stations], value='Calle 106')
                         ],
                         className='btn-actions-pane-right'
                     )
@@ -157,12 +159,46 @@ class ProjectPage():
             ),
             html.Div(
                 [
-                    html.P("Feature still under construction...", className="gen-info"),
+                    html.Div(html.Div([dcc.Graph(id='noise-level-pred')]), className='container'),
                 ],
-                className="card-body mt-3"
+                className="card-body"
             ),
-            html.Div(html.Button('Click here', className="btn btn-secondary"), 
-                     className='d-block text-right card-footer')
+            html.Div(
+                [
+                    "Hours prediction map (Prediction for 6 months)"
+                ],
+                className='card-header card-header-no-top'
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        html.Div([dcc.Graph(figure=predictions.get_hour_predictions_map())]),
+                        id="graph-map-3",
+                        className="fullscreen-div"
+                    ),
+                ],
+                className="card-body"
+            ),
+            html.Div(html.Button('Full screen', id='map-btn-3', className="fullscreen btn btn-secondary"), 
+                     className='d-block text-right card-footer'),
+            html.Div(
+                [
+                    "Weekdays prediction map (Prediction for 6 months)"
+                ],
+                className='card-header card-header-no-top'
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        html.Div([dcc.Graph(figure=predictions.get_day_predictions_map())]),
+                        id='graph-map-4',
+                        className='fullscreen-div'
+                    ),
+                ],
+                className="card-body"
+            ),
+            html.Div(html.Button('Full screen', id='map-btn-4', className="fullscreen btn btn-secondary"), 
+                     className='d-block text-right card-footer'),
         ],
         className='card'
     )
