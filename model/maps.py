@@ -21,8 +21,9 @@ class MapAnalysis():
                                          opacity=0.9
                                          )
         
-        figure_map.update_layout(mapbox_style="stamen-toner",
-                                 mapbox_zoom=9.5, mapbox_center = {"lat": 4.60971, "lon": -74.08175})
+        figure_map.update_layout(mapbox_style="open-street-map",
+                                 mapbox_zoom=9.5,
+                                 mapbox_center = {"lat": 4.60971, "lon": -74.08175})
         
         figure_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
         return figure_map;
