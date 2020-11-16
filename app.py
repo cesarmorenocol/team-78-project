@@ -122,5 +122,15 @@ def plot_time_series_figure(station):
 def plot_bar_figure(station):
     return project.time_series.get_bar_figure(station)
 
+##################################################
+# Callbacks for predictions:
+##################################################
+@app.callback(
+    Output('noise-level-pred', 'figure'),
+    [Input('stations-predictions', 'value')]
+)
+def plot_bar_figure(station):
+    return project.predictions.get_noise_level(station)
+
 if __name__ == '__main__':
     app.run_server()
